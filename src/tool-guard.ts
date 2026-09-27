@@ -78,7 +78,7 @@ export class ToolGuard {
           questions: {
             is_hallucinated: {
               type: "noul",
-              instructions: `Does this tool call to '${toolName}' contain hallucinated, fabricated, or nonsensical parameters/paths?`,
+              instructions: `Using \`tool\` and \`parameters\`, does this tool call to '${toolName}' contain hallucinated, fabricated, or nonsensical parameters/paths?`,
             },
           },
         },
@@ -124,7 +124,7 @@ export class ToolGuard {
           questions: {
             error_category: {
               type: "choice",
-              instructions: "What is the primary root cause of this tool execution failure?",
+              instructions: "Using `tool`, `input`, and `error`, what is the primary root cause of this tool execution failure?",
               criteria: {
                 missing_file: "File or directory path does not exist (potential hallucinated path)",
                 syntax_flag: "Invalid command syntax, unknown flags, or bad parameter structure",

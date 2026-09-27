@@ -144,11 +144,11 @@ export function registerJevCommands(
             questions: {
               is_billing: {
                 type: "noul" as const,
-                instructions: "Is this message related to a billing issue?",
+                instructions: "Using `message`, is this message related to a billing issue?",
               },
               category: {
                 type: "choice" as const,
-                instructions: "Which category does this issue fall into?",
+                instructions: "Using `message`, which category does this issue fall into?",
                 criteria: {
                   billing: "Billing, invoices, card issues",
                   bug: "Software bug or crash",

@@ -176,7 +176,7 @@ function nextQueryQuestion(options: Array<[string, string]>): Record<string, Que
     next_query: {
       type: "choice",
       instructions:
-        "Which single query would find what is still missing? Pick the one worth running next, or none " +
+        "Using `question`, `queries_tried`, `candidate_queries`, and `results`, which single query would find what is still missing? Pick the one worth running next, or none " +
         "when none of them would add anything the question needs",
       criteria,
     },
@@ -338,7 +338,7 @@ export async function searchGate(
       if (optionList.length > 0 && roundIndex < maxRounds) {
         const reply = await ask(
           client,
-          { ...stateOf(stamp, question, tried), passages: {}, results: "none of the results fetched were relevant to the question" },
+          { ...stateOf(stamp, question, tried), passages: {}, results: "none of the results fetched were relevant to the question", candidate_queries: optionList.map(([, value]) => value) },
           nextQueryQuestion(optionList),
           options,
         );
@@ -365,7 +365,7 @@ export async function searchGate(
       enough: {
         type: "noul",
         instructions:
-          "Taken together, the passages contain enough evidence to answer the question without searching " +
+          "Using `question` and `results`, taken together, the search results contain enough evidence to answer the question without searching " +
           "again; a reader would still have to go and find a named fact, figure, date or source that is " +
           "not in them means no",
       },
@@ -373,7 +373,7 @@ export async function searchGate(
     if (optionList.length > 0 && roundIndex < maxRounds) {
       Object.assign(questions, nextQueryQuestion(optionList));
     }
-    const reply = await ask(client, { ...state, passages }, questions, options);
+    const reply = await ask(client, { ...state, passages, results: passages, candidate_queries: optionList.map(([, value]) => value) }, questions, options);
     if (typeof reply === "string") {
       notes.push(`Jev unavailable (${reply}): sufficiency was not decided`);
       result.status = ranked.status !== "ok" ? "fail_closed" : "partial";

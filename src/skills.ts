@@ -147,7 +147,7 @@ export class SkillRouter {
         for (const skill of candidates) {
           questions[skill.name] = {
             type: "noul",
-            instructions: `Does the skill '${skill.name}' (${skill.description}) provide direct guidance or specialized domain steps for this task: "${query}"?`,
+            instructions: `Using \`task\` and \`available_skills\`, does the skill '${skill.name}' (${skill.description}) provide direct guidance or specialized domain steps for the task?`,
           };
         }
 

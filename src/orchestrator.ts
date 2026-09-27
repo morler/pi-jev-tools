@@ -83,11 +83,11 @@ export async function determineTopology(
     try {
       const response = await jevClient.evaluate(
         {
-          state: task,
+          state: { task },
           questions: {
             topology: {
               type: "choice",
-              instructions: "What type of workflow is best suited for this task?",
+              instructions: "Using `task`, what type of workflow is best suited for this task?",
               criteria: {
                 implementation: "Code change, bugfix, refactoring, feature implementation, or file modifications",
                 research: "Investigating codebase, external research, architectural analysis, or exploration",

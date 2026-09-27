@@ -102,7 +102,7 @@ export class AutoModelRouter {
             strong_model: {
               type: "noul",
               instructions:
-                `P = probability the fast model "${lightModel.id}"${lightModel.note ? ` (note: ${lightModel.note})` : ""} CANNOT acceptably complete this turn. Fast-model work: greetings, listings, renames, formatting, lookups, edits, single-step search, and multi-step tool loops (search+summarize, fetch+process+write) regardless of step count. Heavy work: deep architecture or design reasoning, subtle multi-file debugging, large-context synthesis (>20k chars), complex vision analysis. Image-bearing turns additionally require vision capability.`,
+                `Using \`prompt\`, \`context_chars\`, \`has_images\`, and \`light_model\`, P = probability the fast model "${lightModel.id}"${lightModel.note ? ` (note: ${lightModel.note})` : ""} CANNOT acceptably complete this turn. Fast-model work: greetings, listings, renames, formatting, lookups, edits, single-step search, and multi-step tool loops (search+summarize, fetch+process+write) regardless of step count. Heavy work: deep architecture or design reasoning, subtle multi-file debugging, large-context synthesis (>20k chars), complex vision analysis. Image-bearing turns additionally require vision capability.`,
             },
           },
         },

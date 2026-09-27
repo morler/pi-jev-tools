@@ -365,7 +365,7 @@ export class JevCompactor {
     const responses = await Promise.all(
       batches.map((batch) => {
         const questions: Record<string, { type: "noul"; instructions: string }> = {};
-        for (const item of batch) questions[`keep_${item.hash}`] = { type: "noul", instructions: QUESTION };
+        for (const item of batch) questions[`keep_${item.hash}`] = { type: "noul", instructions: `Using \`goal\` and \`messages\`, ${QUESTION}` };
         return this.ask({ state, questions }, signal, c.timeoutMs);
       })
     );

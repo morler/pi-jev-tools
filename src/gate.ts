@@ -147,12 +147,12 @@ export async function evaluateGate(options: GateOptions, jevClient?: JevClient):
   const stateText = resolveGateState(options);
 
   const response = await client.evaluate({
-    state: stateText,
+    state: { text: stateText },
     model: options.model,
     questions: {
       gate_passed: {
         type: "noul",
-        instructions: `Does the provided code/output satisfy this acceptance criteria: "${options.criteria}"?`,
+        instructions: "Using `text`, does the provided code/output satisfy this acceptance criteria?",
       },
     },
   });

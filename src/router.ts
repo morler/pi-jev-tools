@@ -93,7 +93,7 @@ export class ToolRouter {
         for (const c of candidates) {
           questions[c.name] = {
             type: "noul",
-            instructions: `Does the tool '${c.name}' (${c.description || "no description"}) directly help accomplish this task: "${query}"?`,
+            instructions: `Using \`task\` and \`tools\`, does the tool '${c.name}' (${c.description || "no description"}) directly help accomplish the task?`,
           };
         }
 
