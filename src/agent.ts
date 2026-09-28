@@ -54,7 +54,7 @@ export async function executeJevAgentTask(
       instructions: params.instructions || params.task || "Score state",
       criteria: Array.isArray(params.criteria) ? params.criteria : ["poor", "acceptable", "good"],
     };
-  } else {
+  } else if (params.type === undefined || params.type === "noul") {
     // Default to noul (probability / binary check).
     // No criteria field: pi-jev-core's NoulQuestionConfig has none — the SDK's noul()
     // takes only instructions, so a pass-through criteria never reached the model anyway.
@@ -62,6 +62,8 @@ export async function executeJevAgentTask(
       type: "noul",
       instructions: params.instructions || params.task || "Evaluate state",
     };
+  } else {
+    throw new Error(`Unsupported Jev agent task type: ${String(params.type)}`);
   }
 
   const response: JevEvaluationResponse = await client.evaluate(

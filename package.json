@@ -40,7 +40,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "pi-jev-core": "file:../pi-jev-core"
+    "pi-jev-core": "git+https://github.com/morler/pi-jev-core.git#33b2f6f"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

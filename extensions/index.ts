@@ -221,7 +221,11 @@ export default function (pi: ExtensionAPI) {
       const messages = branchMessages(ctx);
       if (messages.length === 0) return "Jev compaction: this session has no messages to score.";
 
-      await compactor.judge(messages, ctx.cwd, ctx.signal);
+      try {
+        await compactor.judge(messages, ctx.cwd, ctx.signal);
+      } catch (error) {
+        return `Jev compaction failed: ${error instanceof Error ? error.message : String(error)}`;
+      }
       // A manual run forces a checkpoint: the user accepts the one-time cache miss. The rewrite itself
       // happens in the context hook, so report the decisions rather than dry-running it here.
       applied = compactor.planPrune(messages, ctx.cwd, activeRun);
@@ -300,8 +304,12 @@ export default function (pi: ExtensionAPI) {
     const schedule = pruneSchedule();
     if (!pruningOn(schedule)) return;
     if (Date.now() - lastJudgeAt < schedule.minGapMs) return;
-    lastJudgeAt = Date.now();
-    await compactor.judge(branchMessages(ctx), ctx.cwd, ctx.signal);
+    try {
+      await compactor.judge(branchMessages(ctx), ctx.cwd, ctx.signal);
+      lastJudgeAt = Date.now();
+    } catch {
+      // Best effort: a Jev failure must not reject the settled event.
+    }
   });
 
   pi.on("turn_end", async (event, ctx) => {
@@ -358,7 +366,12 @@ export default function (pi: ExtensionAPI) {
     const promptChanged = systemPrompt !== event.systemPrompt;
 
     // Auto-model routes independently of auto mode: each opt-in switch gates only itself.
-    const modelResult = await autoModel.route(event.prompt, ctx, { hasImages: Boolean(event.images?.length) });
+    let modelResult;
+    try {
+      modelResult = await autoModel.route(event.prompt, ctx, { hasImages: Boolean(event.images?.length) });
+    } catch {
+      modelResult = { changed: false };
+    }
     if (modelResult.changed) {
       ctx.ui.setStatus("jev", `jev: ${modelResult.tier} → ${modelResult.model?.id ?? "model"}`);
     }
@@ -366,10 +379,19 @@ export default function (pi: ExtensionAPI) {
     if (!auto.enabled) return promptChanged ? { systemPrompt } : undefined;
 
     if (agents.enabled && /\b(architecture|refactor|security review|entire repo|parallel|multiple agents|complex migration)\b/i.test(event.prompt)) {
-      await agents.dispatch(event.prompt, ctx, true);
+      try {
+        await agents.dispatch(event.prompt, ctx, true);
+      } catch {
+        // Best effort: agent orchestration must not reject prompt startup.
+      }
     }
 
-    const result = await auto.route(event.prompt, ctx, ctx.signal);
+    let result;
+    try {
+      result = await auto.route(event.prompt, ctx, ctx.signal);
+    } catch {
+      result = { ran: false, activated: [], skills: [], elapsedMs: 0 };
+    }
     if (!result.ran) return promptChanged ? { systemPrompt } : undefined;
 
     if (result.activated.length > 0) {

@@ -15,4 +15,14 @@ const result = spawnSync(
   { stdio: "inherit", env: process.env }
 );
 
-process.exit(result.status ?? 0);
+if (result.error) {
+  console.error(`[jev-gate] failed to launch runner: ${result.error.message}`);
+  process.exit(1);
+}
+
+if (result.signal) {
+  console.error(`[jev-gate] runner terminated by ${result.signal}`);
+  process.exit(1);
+}
+
+process.exit(result.status ?? 1);

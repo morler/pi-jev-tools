@@ -71,7 +71,15 @@ export class AutoJev {
         this.skillRouter.findSkills(prompt, JEV_THRESHOLD, ctx, signal),
       ]);
 
-      if (tools.fallbackUsed || skills.fallbackUsed) return skip("error");
+      if (tools.fallbackUsed || skills.fallbackUsed) {
+        return {
+          ran: false,
+          reason: "error",
+          activated: tools.activated,
+          skills: [],
+          elapsedMs: Date.now() - startTime,
+        };
+      }
 
       return {
         ran: true,

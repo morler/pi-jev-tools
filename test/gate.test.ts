@@ -44,7 +44,8 @@ test("evaluateGate evaluates gate condition with JevClient", async () => {
     answers: {
       gate_passed: {
         type: "noul",
-        value: 0.92,
+value: 0.92,
+        raw: { noul: 0.92 },
         confidence: 0.95,
       },
     },

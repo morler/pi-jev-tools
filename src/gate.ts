@@ -1,8 +1,10 @@
 import * as fs from "node:fs";
 import { execSync } from "node:child_process";
-import { JevClient } from "./jev.js";
+import { JevClient, noulProbability } from "./jev.js";
 import type { JevAnswerResult } from "./types.js";
 import { credentialHint } from "pi-jev-core";
+
+const DEFAULT_THRESHOLD = 0.7;
 
 export interface GateOptions {
   criteria: string;
@@ -29,7 +31,7 @@ export interface GateResult {
 export function parseGateArgs(args: string[]): GateOptions {
   const options: GateOptions = {
     criteria: "",
-    threshold: 0.7,
+    threshold: DEFAULT_THRESHOLD,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -37,8 +39,12 @@ export function parseGateArgs(args: string[]): GateOptions {
     if (arg === "-c" || arg === "--criteria") {
       options.criteria = args[++i] || "";
     } else if (arg === "-p" || arg === "--min-prob" || arg === "--threshold") {
-      const val = parseFloat(args[++i] || "0.7");
-      if (!isNaN(val)) options.threshold = val;
+      const raw = args[++i];
+      const val = Number.parseFloat(raw ?? "");
+      if (!Number.isFinite(val) || val < 0 || val > 1 || !/^(?:0|1|0?\.\d+)$/.test(raw ?? "")) {
+        throw new Error(`Invalid threshold "${raw}": expected a number between 0 and 1.`);
+      }
+      options.threshold = val;
     } else if (arg === "-d" || arg === "--diff") {
       options.diff = true;
     } else if (arg === "-f" || arg === "--file") {
@@ -95,8 +101,9 @@ export function resolveGateState(options: GateOptions): string {
       const cachedDiff = execSync("git diff --cached", { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
       if (cachedDiff.trim()) return cachedDiff;
       return "No git changes detected.";
-    } catch (e: any) {
-      return `Git diff failed: ${e.message}`;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      throw new Error(`Failed to compute git diff: ${message}`);
     }
   }
 
@@ -122,7 +129,7 @@ export function resolveGateState(options: GateOptions): string {
 
 export async function evaluateGate(options: GateOptions, jevClient?: JevClient): Promise<GateResult> {
   const client = jevClient ?? new JevClient();
-  const threshold = options.threshold ?? 0.7;
+  const threshold = options.threshold ?? DEFAULT_THRESHOLD;
 
   if (!options.criteria.trim()) {
     throw new Error("Missing criteria for gate check. Provide --criteria <text>.");
@@ -146,19 +153,29 @@ export async function evaluateGate(options: GateOptions, jevClient?: JevClient):
 
   const stateText = resolveGateState(options);
 
-  const response = await client.evaluate({
-    state: { text: stateText },
-    model: options.model,
-    questions: {
-      gate_passed: {
-        type: "noul",
-        instructions: "Using `text`, does the provided code/output satisfy this acceptance criteria?",
+  let response;
+  try {
+    response = await client.evaluate({
+      state: { text: stateText },
+      model: options.model,
+      questions: {
+        gate_passed: {
+          type: "noul",
+          instructions: "Using `text`, does the provided code/output satisfy this acceptance criteria?",
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (options.failOpen) {
+      return { passed: true, probability: 1, criteria: options.criteria, threshold, elapsedMs: 0, error: `Jev evaluation failed (fail-open enabled): ${message}` };
+    }
+    throw new Error(`Jev gate evaluation failed: ${message}`);
+  }
 
   const answer = response.answers["gate_passed"];
-  const probability = typeof answer?.value === "number" ? answer.value : Number(answer?.value ?? 0);
+  const probability = noulProbability(answer?.raw);
+  if (probability === null) throw new Error("Jev returned no usable gate answer; cannot evaluate the gate.");
   const passed = probability >= threshold;
 
   return {
