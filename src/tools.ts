@@ -101,7 +101,7 @@ export function registerJevTools(
       let summaryText = "";
       if (result.recommended.length > 0) {
         const lines = result.recommended.map(
-          (r) => `• /skill:${r.name} (P=${r.probability.toFixed(2)})${r.location ? ` - ${r.location}` : ""}\n  ${r.description}`
+          (r) => `• /skill:${r.name}${result.fallbackUsed ? "" : ` (P=${r.probability.toFixed(2)})`}${r.location ? ` - ${r.location}` : ""}\n  ${r.description}`
         );
         summaryText = `Recommended skill(s):\n${lines.join("\n")}\n\nTo use a skill, invoke /skill:<name> or use the read tool to open its SKILL.md file.`;
       } else if (result.candidates.length > 0) {

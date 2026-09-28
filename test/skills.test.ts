@@ -47,7 +47,7 @@ test("SkillRouter loads enabled SKILL.md files with normalized names", () => {
   assert.equal(loaded[0].error, undefined);
 });
 
-test("SkillRouter fallback returns matching keyword candidates with 0 probability", async () => {
+test("SkillRouter fallback does not claim a Jev probability", async () => {
   const mockSkills: SkillMetadata[] = [
     { name: "tdd", description: "Test-driven development" },
     { name: "accessibility", description: "Audit web accessibility" },

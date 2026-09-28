@@ -204,7 +204,7 @@ export function registerJevCommands(
         ctx.ui.notify(
           `Matching skills for "${query}":\n` +
             res.recommended
-              .map((r) => `• /skill:${r.name} (P=${r.probability.toFixed(2)}) - ${r.description}`)
+              .map((r) => `• /skill:${r.name}${res.fallbackUsed ? "" : ` (P=${r.probability.toFixed(2)})`} - ${r.description}`)
               .join("\n") +
             (res.fallbackUsed
               ? "\n(Note: Jev unconfigured/offline — local keyword shortlist, probabilities are not Jev judgments)"
