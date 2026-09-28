@@ -129,8 +129,9 @@ export function registerJevCommands(
           ctx.ui.notify(`Designing a Jev evaluation for: "${rest}"...`, "info");
           try {
             request = await designEvaluation(ctx, rest, ctx.signal);
-          } catch (err: any) {
-            ctx.ui.notify(`Could not design evaluation: ${err?.message || err}`, "error");
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            ctx.ui.notify(`Could not design evaluation: ${message}`, "error");
             return;
           }
           ctx.ui.notify(
@@ -176,8 +177,9 @@ export function registerJevCommands(
                 .join("\n"),
             "info"
           );
-        } catch (err: any) {
-          ctx.ui.notify(`Jev Evaluation Failed: ${err?.message || err}`, "error");
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          ctx.ui.notify(`Jev Evaluation Failed: ${message}`, "error");
         }
         return;
       }

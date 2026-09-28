@@ -120,10 +120,11 @@ export class JevAgentHandler {
             result,
           },
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
         this.pi.events.emit(replyEvent, {
           success: false,
-          error: { message: err?.message || String(err) },
+          error: { message },
         });
       }
     });

@@ -110,8 +110,9 @@ export function resolveGateState(options: GateOptions): string {
   if (options.file) {
     try {
       return fs.readFileSync(options.file, "utf8");
-    } catch (e: any) {
-      throw new Error(`Failed to read file ${options.file}: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      throw new Error(`Failed to read file ${options.file}: ${message}`);
     }
   }
 
