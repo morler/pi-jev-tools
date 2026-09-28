@@ -59,7 +59,14 @@ export function readJsonObject(file: string): Record<string, unknown> {
 /** Write a JSON object, creating its directory. Throws only if the path is unwritable. */
 export function writeJson(file: string, value: unknown): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+  const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    fs.writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`);
+    fs.renameSync(temp, file);
+  } catch (error) {
+    try { fs.rmSync(temp, { force: true }); } catch { /* preserve original write error */ }
+    throw error;
+  }
 }
 
 /** Never throws: a missing or corrupt file just means "nothing saved". */
@@ -131,8 +138,9 @@ export function loadModelPool(): PoolEntry[] {
   const pool: PoolEntry[] = [];
   for (const x of raw) {
     if (typeof x === "string" && x.trim() !== "") pool.push({ model: x.trim() });
-    else if (x && typeof x === "object" && typeof (x as Record<string, unknown>).model === "string" && (x as Record<string, unknown>).model !== "") {
+    else if (x && typeof x === "object" && typeof (x as Record<string, unknown>).model === "string") {
       const model = ((x as Record<string, unknown>).model as string).trim();
+      if (!model) continue;
       const noteRaw = (x as Record<string, unknown>).note;
       pool.push(typeof noteRaw === "string" ? { model, note: noteRaw } : { model });
     }

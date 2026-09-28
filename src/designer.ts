@@ -36,16 +36,20 @@ export function validateDesign(raw: unknown): JevEvaluationRequest | null {
 
   if (candidate.state === undefined || candidate.state === null) return null;
   const state =
-    typeof candidate.state === "string" || typeof candidate.state === "object"
-      ? (candidate.state as Record<string, unknown> | string)
-      : null;
+    typeof candidate.state === "string"
+      ? candidate.state
+      : candidate.state && typeof candidate.state === "object" && !Array.isArray(candidate.state)
+        ? (candidate.state as Record<string, unknown>)
+        : null;
   if (state === null) return null;
 
-  if (!candidate.questions || typeof candidate.questions !== "object") return null;
+  if (!candidate.questions || typeof candidate.questions !== "object" || Array.isArray(candidate.questions)) return null;
+  const entries = Object.entries(candidate.questions as Record<string, unknown>);
+  if (entries.length > MAX_DESIGNED_QUESTIONS) return null;
 
-  const questions: Record<string, QuestionConfig> = {};
-  for (const [id, value] of Object.entries(candidate.questions as Record<string, unknown>)) {
-    if (!value || typeof value !== "object") continue;
+  const questions: Record<string, QuestionConfig> = Object.create(null);
+  for (const [id, value] of entries) {
+    if (!id || !value || typeof value !== "object" || Array.isArray(value)) continue;
     const q = value as { type?: unknown; instructions?: unknown; criteria?: unknown };
     if (typeof q.instructions !== "string" || !q.instructions.trim()) continue;
     if (q.type !== "noul" && q.type !== "choice" && q.type !== "score") continue;
@@ -57,20 +61,21 @@ export function validateDesign(raw: unknown): JevEvaluationRequest | null {
 
     if (q.type === "choice") {
       if (!q.criteria || typeof q.criteria !== "object" || Array.isArray(q.criteria)) continue;
-      if (Object.keys(q.criteria as object).length === 0) continue;
+      const criteria = Object.entries(q.criteria as Record<string, unknown>);
+      if (criteria.length === 0 || criteria.some(([, value]) => value !== null && typeof value !== "string")) continue;
       questions[id] = {
         type: "choice",
         instructions: q.instructions,
-        criteria: q.criteria as Record<string, string | null>,
+        criteria: Object.fromEntries(criteria) as Record<string, string | null>,
       };
       continue;
     }
 
-    if (!Array.isArray(q.criteria) || q.criteria.length === 0) continue;
+    if (!Array.isArray(q.criteria) || q.criteria.length === 0 || q.criteria.some((value) => typeof value !== "string")) continue;
     questions[id] = {
       type: "score",
       instructions: q.instructions,
-      criteria: q.criteria as string[],
+      criteria: q.criteria,
     };
   }
 
